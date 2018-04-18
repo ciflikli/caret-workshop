@@ -158,8 +158,7 @@ safs.ctrl = safsControl(functions = caretSA, method = "boot", number = 10,
                         holdout = .2, improve = 5,
                         allowParallel = TRUE, verbose = TRUE)
 
-sa <- safs(x = training[,which(colnames(training) != "Class")],
-           y = training$Class,
+sa <- safs(x = predictors, y = y,
            iters = 10, method = "glm", family = "binomial", metric = "ROC",
            trControl = cls.ctrl,
            safsControl = safs.ctrl)
