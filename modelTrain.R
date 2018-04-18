@@ -84,12 +84,14 @@ head(rf.preds)
 set.seed(1895)
 models <- caretList(Class ~ ., data = training, trControl = cls_ctrl, metric = "ROC",
                     tuneList = list(logit = caretModelSpec(method = "glm", family = "binomial"),
+                                    elasticnet = caretModelSpec(method = "glmnet", tuneGrid = expand.grid(alpha = 0:1, lambda = seq(0.0001, 1, length = 20))),
                                     rf = caretModelSpec(method = "ranger")),
                     preProcess = c("nzv", "center", "scale"))
 models
 
 models.preds <- lapply(models, predict, newdata = test)
 models.preds <- data.frame(models.preds)
+head(models.preds, 10)
 
 ####Model Dissimilarity####
 tag <- read.csv("tag_data.csv", row.names = 1)
@@ -114,7 +116,6 @@ rownames(classModels)[c(start, nextMods)]
 confusionMatrix(rf.fit)
 
 ##Multiple Model Fits
-resamples(models)
 bwplot(resamples(models)) #dotplot
 
 ####Ensembles####
