@@ -1,6 +1,9 @@
+#install.packages(c("caret", "caretEnsemble", "skimr", "xray", "proxy", "doParallel"))
+
 library(caret)
 library(caretEnsemble)
 library(skimr)
+library(xray)
 library(proxy)
 library(doParallel)
 registerDoParallel(detectCores() - 1)
@@ -8,7 +11,7 @@ registerDoParallel(detectCores() - 1)
 ####Basics####
 dat <- twoClassSim(n = 1000, linearVars = 2, noiseVars = 5, corrVars = 2, mislabel = .01)
 skim(dat)
-xray::anomalies(dat)
+anomalies(dat)
 
 ####Train/Test Split####
 index <- createDataPartition(y = dat$Class, p = .7, list = FALSE)
