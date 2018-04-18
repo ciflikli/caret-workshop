@@ -37,11 +37,24 @@ set.seed(1895)
 glm.fit <- train(Class ~ ., data = training, trControl = cls_ctrl,
                  method = "glm", family = "binomial", metric = "ROC",
                  preProcess = c("nzv", "center", "scale"))
+glm.fit
+
+##For reference - alternate formula interface
+y <- training$Class
+predictors <- training[,which(colnames(training) != "Class")]
+
+set.seed(1895)
+glm.fit <- train(x = predictors, y = y, trControl = cls_ctrl,
+                 method = "glm", family = "binomial", metric = "ROC",
+                 preProcess = c("nzv", "center", "scale"))
 
 glm.fit
 plot(varImp(glm.fit))
 
-glm.preds <- predict(glm.fit, newdata = test, type = "prob")
+glm.preds <- predict(glm.fit, newdata = test)
+head(glm.preds, 20)
+glm.prob.preds <- predict(glm.fit, newdata = test, type = "prob")
+head(glm.prob.preds)
 
 set.seed(1895)
 rf.fit <- train(Class ~ ., data = training, trControl = cls_ctrl,
@@ -51,6 +64,7 @@ rf.fit
 plot(rf.fit)
 
 rf.preds <- predict(rf.fit, newdata = test, type = "prob")
+head(rf.preds)
 
 ####Multiple Models####
 set.seed(1895)
@@ -58,7 +72,9 @@ models <- caretList(Class ~ ., data = training, trControl = cls_ctrl, metric = "
                     tuneList = list(logit = caretModelSpec(method = "glm", family = "binomial"),
                                     rf = caretModelSpec(method = "ranger")),
                     preProcess = c("nzv", "center", "scale"))
-models.preds <- lapply(models, predict, newdata = test, type = "prob")
+models
+
+models.preds <- lapply(models, predict, newdata = test)
 models.preds <- data.frame(models.preds)
 
 ####Model Dissimilarity####
@@ -79,6 +95,8 @@ nextMods <- maxDissim(classModels[start,,drop = FALSE],
 rownames(classModels)[c(start, nextMods)]
 
 ####Performance Metrics####
+
+##In-Sample/Resamples
 resamples(models)
 bwplot(resamples(models)) #dotplot
 
@@ -86,6 +104,7 @@ bwplot(resamples(models)) #dotplot
 
 ##Linear (Simple) Ensembles
 xyplot(resamples(models))
+
 set.seed(1895)
 greedy_ensemble <- caretEnsemble(models, metric = "ROC", trControl = cls_ctrl)
 summary(greedy_ensemble)
@@ -107,8 +126,8 @@ rfe.ctrl = rfeControl(functions = lrFuncs,
 subsets <- c(1:length(training))
 
 set.seed(1895)
-rfe <- rfe(x = training[,which(colnames(training) != "Class")],
-           y = training$Class, sizes = subsets, metric = "ROC", rfeControl = rfe.ctrl)
+rfe <- rfe(x = predictors, y = y, sizes = subsets,
+           metric = "ROC", rfeControl = rfe.ctrl)
 rfe
 
 ####Simulated Annealing
