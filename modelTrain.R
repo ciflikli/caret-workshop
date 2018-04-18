@@ -1,6 +1,7 @@
 library(caret)
 library(caretEnsemble)
 library(skimr)
+library(proxy)
 library(doParallel)
 registerDoParallel(detectCores() - 1)
 
@@ -17,11 +18,10 @@ test <- dat[-index, ]
 ####trainControl####
 reg_ctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 5, allowParallel = TRUE)
 
-cls_ctrl <- trainControl(method = "repeatedcv", #boot, cv, loocv, timeslice etc.
+cls_ctrl <- trainControl(method = "repeatedcv", #boot, cv, LOOCV, timeslice OR adaptive etc.
                          number = 10, repeats = 5,
                          classProbs = TRUE, summaryFunction = twoClassSummary,
-                         sampling = "up", #down, SMOTE, ROSE
-                        savePredictions = "final", allowParallel = TRUE)
+                         savePredictions = "final", allowParallel = TRUE)
 
 ####Regression####
 
@@ -31,16 +31,19 @@ lm.fit
 
 ####Classification####
 set.seed(1895)
-glm.fit <- train(Class ~ ., data = training, trControl = cls_ctrl, method = "glm", family = "binomial",
-                 metric = "ROC")
+glm.fit <- train(Class ~ ., data = training, trControl = cls_ctrl,
+                 method = "glm", family = "binomial", metric = "ROC",
+                 preProcess = c("nzv", "center", "scale"))
+
 glm.fit
 plot(varImp(glm.fit))
 
 glm.preds <- predict(glm.fit, newdata = test, type = "prob")
 
 set.seed(1895)
-rf.fit <- train(Class ~ ., data = training, trControl = cls_ctrl, method = "ranger",
-                metric = "ROC")
+rf.fit <- train(Class ~ ., data = training, trControl = cls_ctrl,
+                method = "ranger", metric = "ROC",
+                preProcess = c("nzv", "center", "scale"))
 rf.fit
 plot(rf.fit)
 
@@ -50,9 +53,27 @@ rf.preds <- predict(rf.fit, newdata = test, type = "prob")
 set.seed(1895)
 models <- caretList(Class ~ ., data = training, trControl = cls_ctrl, metric = "ROC",
                     tuneList = list(logit = caretModelSpec(method = "glm", family = "binomial"),
-                                    rf = caretModelSpec(method = "ranger")))
+                                    rf = caretModelSpec(method = "ranger")),
+                    preProcess = c("nzv", "center", "scale"))
 models.preds <- lapply(models, predict, newdata = test, type = "prob")
 models.preds <- data.frame(models.preds)
+
+####Model Dissimilarity####
+tag <- read.csv("tag_data.csv", row.names = 1)
+tag <- as.matrix(tag)
+
+classModels <- tag[tag[, "Classification"] == 1,]
+
+all <- 1:nrow(classModels)
+start <- grep("ranger", rownames(classModels), fixed = TRUE)
+pool <- all[all != start]
+
+nextMods <- maxDissim(classModels[start,,drop = FALSE], 
+                      classModels[pool, ], 
+                      method = "Jaccard",
+                      n = 4)
+
+rownames(classModels)[c(start, nextMods)]
 
 ####Performance Metrics####
 resamples(models)
