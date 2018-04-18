@@ -2,7 +2,7 @@
 Applied Predictive Modeling with ```caret```  
 
 ## Basics
-Create synthetic data using ```twoClassSim```
+Create synthetic data using ```twoClassSim```  
 Quickly explore the data using ```skimr``` and ```xray```  
 Split the dataset into train/test with an index  
 
