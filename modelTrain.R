@@ -8,6 +8,8 @@ library(proxy)
 library(doParallel)
 registerDoParallel(detectCores() - 1)
 
+#load("caret.rdata")
+
 ####Basics####
 dat <- twoClassSim(n = 1000, linearVars = 2, noiseVars = 5, corrVars = 2, mislabel = .01)
 skim(dat)
@@ -51,10 +53,22 @@ glm.fit <- train(x = predictors, y = y, trControl = cls_ctrl,
 glm.fit
 plot(varImp(glm.fit))
 
+##Predict on unseen data
 glm.preds <- predict(glm.fit, newdata = test)
 head(glm.preds, 20)
-glm.prob.preds <- predict(glm.fit, newdata = test, type = "prob")
+glm.prob.preds <- predict(glm.fit, newdata = test, type = "prob") #class probabilities
 head(glm.prob.preds)
+
+##Elastic Net
+glmnet.fit <- train(x = predictors, y = y, trControl = cls_ctrl,
+                    method = "glmnet", metric = "ROC",
+                    preProcess = c("nzv", "center", "scale"),
+                    tuneGrid = expand.grid(alpha = 0:1,
+                                           lambda = seq(0.0001, 1, length = 20)))
+glmnet.fit
+plot(glmnet.fit)
+
+##Random Forest
 
 set.seed(1895)
 rf.fit <- train(Class ~ ., data = training, trControl = cls_ctrl,
@@ -96,7 +110,10 @@ rownames(classModels)[c(start, nextMods)]
 
 ####Performance Metrics####
 
-##In-Sample/Resamples
+##Single Model Fit
+confusionMatrix(rf.fit)
+
+##Multiple Model Fits
 resamples(models)
 bwplot(resamples(models)) #dotplot
 
