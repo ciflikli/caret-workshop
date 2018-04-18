@@ -122,6 +122,7 @@ bwplot(resamples(models)) #dotplot
 
 ##Linear (Simple) Ensembles
 xyplot(resamples(models))
+modelCor(resamples(models))
 
 set.seed(1895)
 greedy_ensemble <- caretEnsemble(models, metric = "ROC", trControl = cls.ctrl)
