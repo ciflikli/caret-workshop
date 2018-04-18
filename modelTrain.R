@@ -25,6 +25,10 @@ cls_ctrl <- trainControl(method = "repeatedcv", #boot, cv, loocv, timeslice etc.
 
 ####Regression####
 
+set.seed(1895)
+lm.fit <- train(Linear1 ~ ., data = training, trControl = reg_ctrl, method = "lm")
+lm.fit
+
 ####Classification####
 set.seed(1895)
 glm.fit <- train(Class ~ ., data = training, trControl = cls_ctrl, method = "glm", family = "binomial",
