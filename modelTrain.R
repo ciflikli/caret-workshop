@@ -21,9 +21,9 @@ training <- dat[index, ]
 test <- dat[-index, ]
 
 ####trainControl####
-reg_ctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 5, allowParallel = TRUE)
+reg.ctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 5, allowParallel = TRUE)
 
-cls_ctrl <- trainControl(method = "repeatedcv", #boot, cv, LOOCV, timeslice OR adaptive etc.
+cls.ctrl <- trainControl(method = "repeatedcv", #boot, cv, LOOCV, timeslice OR adaptive etc.
                          number = 10, repeats = 5,
                          classProbs = TRUE, summaryFunction = twoClassSummary,
                          savePredictions = "final", allowParallel = TRUE)
@@ -31,12 +31,12 @@ cls_ctrl <- trainControl(method = "repeatedcv", #boot, cv, LOOCV, timeslice OR a
 ####Regression####
 
 set.seed(1895)
-lm.fit <- train(Linear1 ~ ., data = training, trControl = reg_ctrl, method = "lm")
+lm.fit <- train(Linear1 ~ ., data = training, trControl = reg.ctrl, method = "lm")
 lm.fit
 
 ####Classification####
 set.seed(1895)
-glm.fit <- train(Class ~ ., data = training, trControl = cls_ctrl,
+glm.fit <- train(Class ~ ., data = training, trControl = cls.ctrl,
                  method = "glm", family = "binomial", metric = "ROC",
                  preProcess = c("nzv", "center", "scale"))
 glm.fit
@@ -46,7 +46,7 @@ y <- training$Class
 predictors <- training[,which(colnames(training) != "Class")]
 
 set.seed(1895)
-glm.fit <- train(x = predictors, y = y, trControl = cls_ctrl,
+glm.fit <- train(x = predictors, y = y, trControl = cls.ctrl,
                  method = "glm", family = "binomial", metric = "ROC",
                  preProcess = c("nzv", "center", "scale"))
 
@@ -60,7 +60,7 @@ glm.prob.preds <- predict(glm.fit, newdata = test, type = "prob") #class probabi
 head(glm.prob.preds)
 
 ##Elastic Net
-glmnet.fit <- train(x = predictors, y = y, trControl = cls_ctrl,
+glmnet.fit <- train(x = predictors, y = y, trControl = cls.ctrl,
                     method = "glmnet", metric = "ROC",
                     preProcess = c("nzv", "center", "scale"),
                     tuneGrid = expand.grid(alpha = 0:1,
@@ -71,7 +71,7 @@ plot(glmnet.fit)
 ##Random Forest
 
 set.seed(1895)
-rf.fit <- train(Class ~ ., data = training, trControl = cls_ctrl,
+rf.fit <- train(Class ~ ., data = training, trControl = cls.ctrl,
                 method = "ranger", metric = "ROC",
                 preProcess = c("nzv", "center", "scale"))
 rf.fit
@@ -82,7 +82,7 @@ head(rf.preds)
 
 ####Multiple Models####
 set.seed(1895)
-models <- caretList(Class ~ ., data = training, trControl = cls_ctrl, metric = "ROC",
+models <- caretList(Class ~ ., data = training, trControl = cls.ctrl, metric = "ROC",
                     tuneList = list(logit = caretModelSpec(method = "glm", family = "binomial"),
                                     elasticnet = caretModelSpec(method = "glmnet", tuneGrid = expand.grid(alpha = 0:1, lambda = seq(0.0001, 1, length = 20))),
                                     rf = caretModelSpec(method = "ranger")),
@@ -124,11 +124,11 @@ bwplot(resamples(models)) #dotplot
 xyplot(resamples(models))
 
 set.seed(1895)
-greedy_ensemble <- caretEnsemble(models, metric = "ROC", trControl = cls_ctrl)
+greedy_ensemble <- caretEnsemble(models, metric = "ROC", trControl = cls.ctrl)
 summary(greedy_ensemble)
 
 ##Meta-Model Ensembles
-glm_ensemble <- caretStack(models, method = "glm", metric = "ROC", trControl = cls_ctrl)
+glm_ensemble <- caretStack(models, method = "glm", metric = "ROC", trControl = cls.ctrl)
 summary(glm_ensemble)
 
 ####Feature Selection####
@@ -161,7 +161,7 @@ safs.ctrl = safsControl(functions = caretSA, method = "boot", number = 10,
 sa <- safs(x = training[,which(colnames(training) != "Class")],
            y = training$Class,
            iters = 10, method = "glm", family = "binomial", metric = "ROC",
-           trControl = cls_ctrl,
+           trControl = cls.ctrl,
            safsControl = safs.ctrl)
 sa
 
@@ -175,9 +175,8 @@ gafs.ctrl = gafsControl(functions = caretGA, method = "boot", number = 10,
                         allowParallel = TRUE, genParallel = TRUE, verbose = TRUE)
 
 set.seed(1895)
-ga <- gafs(x = training[,which(colnames(training) != "Class")],
-           y = training$Class, iters = 5, popSize = 2, elite = 0,
+ga <- gafs(x = predictors, y = y, iters = 5, popSize = 2, elite = 0,
            differences = TRUE, method = "glm", family = "binomial", metric = "ROC",
-           trControl = cls_ctrl,
+           trControl = cls.ctrl,
            gafsControl = gafs.ctrl)
 ga
