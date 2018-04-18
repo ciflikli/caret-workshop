@@ -2,7 +2,7 @@
 Applied Predictive Modeling with ```caret```  
 
 ## Basics
-Create synthetic data using ```twoClassSim```  
+Create synthetic data using ```twoClassSim```
 Quickly explore the data using ```skimr``` and ```xray```  
 Split the dataset into train/test with an index  
 
@@ -14,11 +14,16 @@ Subsampling to deal with class-imbalance (mentioned but not implemented)
 ## ModelTrain
 Placeholder regression example  
 Classification example  
+Logistic Regression (```glm```), Elastic Net (```glmnet```), Random Forest (```ranger```)  
 Using summary, variable importance, plot on fit object  
-Prediction on unseen data  
+Prediction on unseen data: class; class probability  
+
+## Performance Metrics
+In-sample: ROC, Sensitivity (true positive rate), Specificity (true negative rate)  
+Confusion matrices
 
 ## Ensembles
-Model dissimilarity using Jaccard  
+Model dissimilarity using Jaccard distance  
 Linear ensembles  
 Meta-Model ensembles  
 
